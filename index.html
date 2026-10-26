@@ -3,16 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>星巴克團購統計｜每天自動更新菜單</title>
-<meta name="description" content="統計星巴克飲品訂單：選飲品、數量、訂購人姓名與客製化備註，支援每日菜單更新與一鍵複製彙整。">
+<title>星巴克團購統計｜多人同步點購</title>
+<meta name="description" content="星巴克團購統計：選飲品、數量、訂購人姓名與客製化備註，支援多人同時在線上同步點購。">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <style>
 :root{--green:#00704a;--dark:#1e3932;--bg:#f6f4f1;--card:#fff;--line:#e7e1da;--muted:#6b7280;--radius:18px;--shadow:0 8px 28px rgba(30,57,50,.08)}
 *{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;background:var(--bg);color:#222;line-height:1.6}
 a{color:var(--green)} header{background:var(--dark);color:#fff;padding:28px 20px 22px}
 .wrap{max-width:1120px;margin:0 auto;padding:0 18px}
 .top{display:flex;gap:16px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
-.logo{font-size:42px;line-height:1} h1{margin:0;font-size:clamp(26px,4vw,38px);letter-spacing:.02em}
-.sub{color:#cfe3da;margin:8px 0 0;max-width:680px}
+h1{margin:0;font-size:clamp(26px,4vw,38px)}.sub{color:#cfe3da;margin:8px 0 0;max-width:680px}
 .badge{display:inline-flex;gap:6px;align-items:center;background:#fff;color:var(--dark);border-radius:999px;padding:7px 12px;font-size:13px;font-weight:700;white-space:nowrap}
 .badge i{width:8px;height:8px;border-radius:50%;background:#22a06b;display:inline-block}
 .meta{margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;color:#d7e8e0;font-size:14px}
@@ -20,6 +21,7 @@ a{color:var(--green)} header{background:var(--dark);color:#fff;padding:28px 20px
 main{padding:22px 0 40px}.grid{display:grid;grid-template-columns:1.25fr.85fr;gap:20px;align-items:start}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px}
 .card h2{margin:0 0 6px;font-size:20px;color:var(--dark)}.hint{color:var(--muted);font-size:14px;margin:0 0 14px}
+.room{display:flex;gap:10px;flex-wrap:wrap;align-items:end}.room.field{flex:1;min-width:200px;margin:0}
 .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
 .tab{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;cursor:pointer;font-size:14px}
 .tab.active{background:var(--dark);color:#fff;border-color:var(--dark)}
@@ -39,8 +41,8 @@ textarea{min-height:78px;resize:vertical}
 .qty strong{font-size:20px;min-width:28px;text-align:center}
 .chips{display:flex;gap:7px;flex-wrap:wrap}.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 11px;cursor:pointer;font-size:13px}
 .chip.active{background:var(--dark);color:#fff;border-color:var(--dark)}
-.btn{width:100%;border:0;border-radius:13px;padding:14px;font-size:17px;font-weight:800;cursor:pointer}
-.btn-green{background:var(--green);color:#fff}.btn-dark{background:var(--dark);color:#fff}.btn-light{background:#fff;border:1px solid var(--line)}
+.btn{border:0;border-radius:13px;padding:14px;font-size:16px;font-weight:800;cursor:pointer}
+.btn-green{background:var(--green);color:#fff;width:100%}.btn-dark{background:var(--dark);color:#fff}.btn-light{background:#fff;border:1px solid var(--line)}
 .btn-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
 .sticky{position:sticky;top:16px}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}.stat{background:#f6f4f1;border-radius:13px;padding:12px;text-align:center}
@@ -50,17 +52,22 @@ textarea{min-height:78px;resize:vertical}
 .del{border:0;background:#fff1f1;color:#b42318;border-radius:10px;padding:8px 11px;cursor:pointer;white-space:nowrap;height:fit-content}
 .empty{color:var(--muted);text-align:center;padding:22px 0}
 .summary{white-space:pre-wrap;background:#f6f4f1;border-radius:12px;padding:14px;font-size:14px;max-height:260px;overflow:auto}
+.status{border-radius:12px;padding:11px 13px;font-size:14px;margin-top:12px}
+.status.local{background:#f6f4f1;color:#444}.status.sync{background:#eff8f3;color:#14532d;border:1px solid #a7d7c0}
+details{margin-top:12px;font-size:14px;color:var(--muted)} details summary{cursor:pointer;color:var(--dark);font-weight:700}
+code{background:#f0ede8;border-radius:6px;padding:2px 6px;font-size:13px;word-break:break-all}
+pre{background:#1e3932;color:#d7e8e0;border-radius:12px;padding:13px;overflow:auto;font-size:12px;line-height:1.5}
 footer{color:var(--muted);font-size:13px;text-align:center;padding:0 18px 30px}
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--dark);color:#fff;padding:12px 18px;border-radius:999px;box-shadow:0 10px 30px rgba(0,0,0,.25);z-index:99;display:none;max-width:92vw;text-align:center}
 @media(max-width:900px){.grid{grid-template-columns:1fr}.sticky{position:static}.menu{grid-template-columns:1fr 1fr}}
-@media(max-width:520px){header{padding:22px 14px}.card{padding:16px}.menu{grid-template-columns:1fr}.stats{grid-template-columns:repeat(3,1fr)}.btn-row{grid-template-columns:1fr}}
+@media(max-width:520px){header{padding:22px 14px}.card{padding:16px}.menu{grid-template-columns:1fr}.btn-row{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <header>
 <div class="wrap">
 <div class="top">
-<div><h1>☕ 星巴克團購統計</h1><p class="sub">選飲品、填數量與姓名、寫下客製化需求，一頁就能彙整全團的訂單。</p></div>
+<div><h1>☕ 星巴克團購統計</h1><p class="sub">選飲品、填數量與姓名、寫下客製化需求。開啟多人同步後，全團在同一團購代碼下點購，所有人的訂單會即時出現在同一張清單。</p></div>
 <span class="badge"><i></i> 今日菜單已更新</span>
 </div>
 <div class="meta">
@@ -72,6 +79,38 @@ footer{color:var(--muted);font-size:13px;text-align:center;padding:0 18px 30px}
 </header>
 
 <main class="wrap">
+<section class="card" style="margin-bottom:20px">
+<h2>👥 多人同步點購</h2>
+<p class="hint">把團購代碼分享給大家，所有人打開同一個連結、輸入同一個代碼，就能看到同一張即時訂單。代碼預設是今天日期，每天自動換一團。</p>
+<div class="room">
+<div class="field"><label for="roomCode">團購代碼</label><input id="roomCode" type="text" placeholder="例如：2026-10-27-office"></div>
+<button class="btn btn-dark" type="button" onclick="joinRoom()">進入 / 切換此團</button>
+<button class="btn btn-light" type="button" onclick="copyInvite()">🔗 複製邀請連結</button>
+</div>
+<div id="syncStatus" class="status local">正在檢查同步狀態…</div>
+<details>
+<summary>開啟多人同步，需要做的一次性設定（約 5 分鐘）</summary>
+<p>GitHub Pages 本身是靜態網站，沒辦法自己記住多人的訂單，所以多人同步需要一個免費的即時資料庫。本頁已內建 Firebase Realtime Database 的程式碼，只要填入設定就好：</p>
+<ol>
+<li>到 <a href="https://console.firebase.google.com/" target="_blank" rel="noopener">Firebase Console</a> 建立專案（免費 Spark 方案即可），新增一個網頁應用程式。</li>
+<li>在左側選 Realtime Database → 建立資料庫，位置選亞洲區，初期規則可先設為測試模式（之後再依下方規則收緊）。</li>
+<li>把 Firebase 給你的設定值，貼到本檔案最下方 <code>FIREBASE_CONFIG</code> 的位置，重新發佈後，所有人打開頁面就會自動進入同步模式，不需要登入。</li>
+</ol>
+<p>建議的資料庫規則（只允許讀寫 rooms 底下的團購資料）：</p>
+<pre>{
+"rules": {
+"rooms": {
+"$room": {
+".read": true,
+".write": true
+}
+}
+}
+}</pre>
+<p>注意：這個規則是「知道團購代碼就能讀寫」，適合朋友、同事間的臨時團購，不適合放機密資料。代碼請用不容易猜到的字串，例如 <code>2026-10-27-office-8f3k</code>。在設定完成之前，頁面會自動用本機模式運作，功能完全正常，只是訂單只存在自己的裝置上。</p>
+</details>
+</section>
+
 <div class="grid">
 <section class="card">
 <h2>1 · 選一杯飲品</h2>
@@ -99,11 +138,11 @@ footer{color:var(--muted);font-size:13px;text-align:center;padding:0 18px 30px}
 <div class="field"><label>常用客製化（可多選，點一下加入備註）</label><div class="chips" id="chips"></div></div>
 <div class="field"><label for="note">備註 / 客製化需求</label><textarea id="note" placeholder="例如：少糖、少冰、加一份濃縮、換燕麥奶、不要鮮奶油…"></textarea></div>
 <button class="btn btn-green" type="button" onclick="addOrder()">＋ 加入訂單</button>
-<p class="hint" style="margin-top:10px">訂單只存在這台裝置的瀏覽器裡（依日期分開存放），適合先彙整再由一人統一到門市 / App 下單，本頁不是星巴克官方訂購系統。</p>
+<p class="hint" style="margin-top:10px">同步模式下，加入、刪除都會即時同步給同團的所有人；本機模式下訂單只存在這台裝置的瀏覽器裡（依日期分開存放）。本頁不是星巴克官方訂購系統，適合先彙整再由一人統一到門市 / App 下單。</p>
 </section>
 
 <aside class="card sticky">
-<h2>今日訂單統計</h2>
+<h2>今日訂單統計 <span id="roomLabel" style="font-size:14px;color:var(--muted)"></span></h2>
 <p class="hint" id="orderDateText">—</p>
 <div class="stats">
 <div class="stat"><b id="totalCups">0</b><span>總杯數</span></div>
@@ -115,11 +154,11 @@ footer{color:var(--muted);font-size:13px;text-align:center;padding:0 18px 30px}
 <button class="btn btn-dark" type="button" onclick="copySummary()">📋 複製彙整文字</button>
 <button class="btn btn-light" type="button" onclick="downloadSummary()">⬇ 下載彙整.txt</button>
 </div>
-<button class="btn btn-light" style="margin-top:10px" type="button" onclick="clearToday()">🗑 清除今日訂單</button>
+<button class="btn btn-light" style="margin-top:10px;width:100%" type="button" onclick="clearToday()">🗑 清除本團訂單</button>
 <h2 style="margin-top:22px;font-size:17px">彙整預覽</h2>
 <div class="summary" id="summaryText">還沒有訂單。</div>
 <h2 style="margin-top:22px;font-size:17px">關於「每天自動更新」</h2>
-<p class="hint">星巴克官方沒有公開即時菜單 API，本頁因此採用每日機制：① 每天第一次開啟時，菜單更新日自動變成當天、今日推薦重新輪換、訂單改存到當天的新清單；② 每次開啟都會檢查日期，跨日不會把昨天的訂單混進今天；③ 要更換正式品項時，只要編輯本檔案內的 MENU 清單並重新發佈，訪客重新整理後即生效。</p>
+<p class="hint">星巴克官方沒有公開即時菜單 API，本頁因此採用每日機制：① 每天第一次開啟時，菜單更新日自動變成當天、今日推薦重新輪換；② 團購代碼預設就是當天日期，跨日自動開新團，不會把昨天的訂單混進今天；③ 要更換正式品項時，只要編輯本檔案內的 MENU 清單並重新發佈，訪客重新整理後即生效。</p>
 </aside>
 </div>
 </main>
@@ -127,6 +166,19 @@ footer{color:var(--muted);font-size:13px;text-align:center;padding:0 18px 30px}
 <div class="toast" id="toast"></div>
 
 <script>
+// ===== 多人同步設定：把 Firebase Console 給你的設定貼在這裡，取代 null =====
+// 範例：
+// const FIREBASE_CONFIG = {
+// apiKey: "AIza...",
+// authDomain: "your-project.firebaseapp.com",
+// databaseURL: "https://your-project-default-rtdb.asia-southeast1.firebasedatabase.app",
+// projectId: "your-project",
+// storageBucket: "your-project.appspot.com",
+// messagingSenderId: "1234567890",
+// appId: "1:1234567890:web:abc..."
+//};
+const FIREBASE_CONFIG = null;
+
 const MENU=[
 {name:"美式咖啡",en:"Caffè Americano",cat:"咖啡",temp:"冰/熱",price:{Tall:105,Grande:125,Venti:145}},
 {name:"拿堤",en:"Caffè Latte",cat:"咖啡",temp:"冰/熱",price:{Tall:135,Grande:155,Venti:175}},
@@ -157,12 +209,43 @@ const MENU=[
 const CATS=["全部","咖啡","星冰樂","茶飲及其他"];
 const CHIP_LIST=["少糖","半糖","無糖","少冰","去冰","正常冰","加一份濃縮","換燕麥奶","換豆奶","去咖啡因","不要鮮奶油","多加鮮奶油"];
 let activeCat="全部", selected=null, size="Grande", temp="冰", qty=1;
+let syncMode=false, dbRef=null, syncOrders=[];
 function todayStr(d){d=d||new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
 function fmtDate(s){const p=s.split("-");return p[0]+"年"+p[1]+"月"+p[2]+"日";}
+function cleanRoom(v){return (v||"").trim().replace(/[^A-Za-z0-9\-_]/g,"").slice(0,60)||todayStr();}
+function getRoom(){return cleanRoom(new URLSearchParams(location.search).get("room")||todayStr());}
 function orderKey(){return "sb_orders_"+todayStr();}
 function loadOrders(){try{return JSON.parse(localStorage.getItem(orderKey())||"[]")}catch(e){return []}}
 function saveOrders(o){localStorage.setItem(orderKey(),JSON.stringify(o))}
+function currentOrders(){return syncMode?syncOrders:loadOrders();}
 function toast(m){const t=document.getElementById("toast");t.textContent=m;t.style.display="block";setTimeout(()=>t.style.display="none",3200)}
+function setSyncStatus(msg,sync){const el=document.getElementById("syncStatus");el.textContent=msg;el.className="status "+(sync?"sync":"local")}
+function initSync(){
+const room=getRoom();
+document.getElementById("roomCode").value=room;
+document.getElementById("roomLabel").textContent="· 團："+room;
+if(!FIREBASE_CONFIG){setSyncStatus("目前是本機模式：尚未填入 Firebase 設定，所以訂單只存在這台裝置。展開下方設定說明，填入設定並重新發佈後，就會自動變成多人同步模式。",false);renderOrders();return}
+try{
+if(typeof firebase==="undefined")throw new Error("Firebase SDK 未載入");
+if(!firebase.apps.length)firebase.initializeApp(FIREBASE_CONFIG);
+dbRef=firebase.database().ref("rooms/"+room+"/orders");
+dbRef.on("value",snap=>{
+const val=snap.val()||{};
+syncOrders=Object.entries(val).map(([id,o])=>({...o,id})).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+syncMode=true;setSyncStatus("🟢 多人同步已開啟：團購代碼 "+room+"，同團所有人的新增、刪除都會即時同步到這張清單。",true);renderOrders();
+},err=>{syncMode=false;setSyncStatus("同步連線失敗，已退回本機模式："+err.message,false);renderOrders()});
+setSyncStatus("正在連接多人同步…（團購代碼 "+room+"）",false);
+}catch(e){syncMode=false;setSyncStatus("同步設定有問題，已退回本機模式："+e.message,false);renderOrders()}
+}
+function joinRoom(){
+const room=cleanRoom(document.getElementById("roomCode").value);
+const url=new URL(location.href);url.searchParams.set("room",room);location.href=url.toString();
+}
+function copyInvite(){
+const room=cleanRoom(document.getElementById("roomCode").value);
+const url=new URL(location.href);url.searchParams.set("room",room);
+navigator.clipboard.writeText(url.toString()).then(()=>toast("邀請連結已複製，貼到群組大家就能進同一團")).catch(()=>toast("複製失敗，請手動複製網址並加上?room="+room));
+}
 function seededPicks(){
 const s=todayStr();let h=0;for(let i=0;i<s.length;i++){h=(h*31+s.charCodeAt(i))>>>0}
 const arr=[...MENU];for(let i=arr.length-1;i>0;i--){h=(h*1103515245+12345)&0x7fffffff;const j=h%(i+1);[arr[i],arr[j]]=[arr[j],arr[i]]}
@@ -178,9 +261,7 @@ if(last!==today){localStorage.setItem("sb_menu_date",today);if(last){toast("已�
 else if(manual){toast("已檢查：今日菜單為 "+fmtDate(today))}
 renderOrders();
 }
-function renderTabs(){
-document.getElementById("tabs").innerHTML=CATS.map(c=>`<button type="button" class="tab ${c===activeCat?"active":""}" onclick="setCat('${c}')">${c}</button>`).join("");
-}
+function renderTabs(){document.getElementById("tabs").innerHTML=CATS.map(c=>`<button type="button" class="tab ${c===activeCat?"active":""}" onclick="setCat('${c}')">${c}</button>`).join("")}
 function setCat(c){activeCat=c;renderTabs();renderMenu()}
 function renderMenu(){
 const q=(document.getElementById("search").value||"").trim();
@@ -191,18 +272,11 @@ return `<button type="button" class="drink ${sel?"selected":""}" onclick="select
 }).join(""):`<p style="grid-column:1/-1;color:var(--muted)">找不到「${q}」，試試其他關鍵字，或點分類瀏覽。</p>`;
 document.getElementById("menuCount").textContent=`共 ${list.length} 款（全部 ${MENU.length} 款）`;
 }
-function selectDrink(name){
-selected=MENU.find(m=>m.name===name);
-document.getElementById("selectedText").textContent=selected?selected.name+"（"+selected.en+"）":"尚未選擇飲品";
-renderMenu();
-document.getElementById("buyer").focus();
-}
+function selectDrink(name){selected=MENU.find(m=>m.name===name);document.getElementById("selectedText").textContent=selected?selected.name+"（"+selected.en+"）":"尚未選擇飲品";renderMenu();document.getElementById("buyer").focus()}
 function setSize(btn){size=btn.dataset.v;document.querySelectorAll("#sizeSeg button").forEach(b=>b.classList.toggle("active",b===btn))}
 function setTemp(btn){temp=btn.dataset.v;document.querySelectorAll("#tempSeg button").forEach(b=>b.classList.toggle("active",b===btn))}
 function changeQty(d){qty=Math.max(1,Math.min(20,qty+d));document.getElementById("qtyText").textContent=qty}
-function renderChips(){
-document.getElementById("chips").innerHTML=CHIP_LIST.map(c=>`<button type="button" class="chip" onclick="toggleChip(this)">${c}</button>`).join("");
-}
+function renderChips(){document.getElementById("chips").innerHTML=CHIP_LIST.map(c=>`<button type="button" class="chip" onclick="toggleChip(this)">${c}</button>`).join("")}
 function toggleChip(btn){
 btn.classList.toggle("active");
 const note=document.getElementById("note");const v=btn.textContent.trim();
@@ -215,24 +289,31 @@ function addOrder(){
 const buyer=document.getElementById("buyer").value.trim();
 if(!buyer){toast("請先填寫訂購人姓名");document.getElementById("buyer").focus();return}
 if(!selected){toast("請先點選一杯飲品");return}
-const orders=loadOrders();
-orders.push({buyer,drink:selected.name,size,temp,qty,note:document.getElementById("note").value.trim(),time:new Date().toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit"})});
-saveOrders(orders);renderOrders();
+const item={buyer,drink:selected.name,size,temp,qty,note:document.getElementById("note").value.trim(),time:new Date().toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit"}),createdAt:Date.now()};
+if(syncMode&&dbRef){dbRef.push(item).then(()=>toast(`已同步加入：${buyer} 的 ${selected.name} x${qty}`)).catch(e=>toast("同步失敗："+e.message))}
+else{const orders=loadOrders();orders.push(item);saveOrders(orders);renderOrders();toast(`已加入：${buyer} 的 ${selected.name} x${qty}`)}
 document.getElementById("note").value="";document.querySelectorAll(".chip").forEach(c=>c.classList.remove("active"));
 qty=1;document.getElementById("qtyText").textContent=qty;
-toast(`已加入：${buyer} 的 ${selected.name} x${orders[orders.length-1].qty}`);
 }
 function renderOrders(){
-const orders=loadOrders();
+const orders=currentOrders();
 const cups=orders.reduce((a,o)=>a+o.qty,0);
 document.getElementById("totalCups").textContent=cups;
 document.getElementById("totalPeople").textContent=new Set(orders.map(o=>o.buyer)).size;
 document.getElementById("totalItems").textContent=orders.length;
-document.getElementById("orderList").innerHTML=orders.length?orders.map((o,i)=>`<div class="order"><div><b>${o.buyer} · ${o.drink}</b><small>${o.size} · ${o.temp} · ${o.qty} 杯${o.note?" · 備註："+o.note:""} · ${o.time}</small></div><button class="del" type="button" onclick="removeOrder(${i})">刪除</button></div>`).join(""):`<p class="empty">還沒有訂單，先從左邊選一杯吧。</p>`;
+document.getElementById("orderList").innerHTML=orders.length?orders.map((o,i)=>`<div class="order"><div><b>${o.buyer} · ${o.drink}</b><small>${o.size} · ${o.temp} · ${o.qty} 杯${o.note?" · 備註："+o.note:""} · ${o.time||""}</small></div><button class="del" type="button" onclick="removeOrder(${i})">刪除</button></div>`).join(""):`<p class="empty">還沒有訂單，先從左邊選一杯吧。</p>`;
 document.getElementById("summaryText").textContent=buildSummary(orders);
 }
-function removeOrder(i){const o=loadOrders();o.splice(i,1);saveOrders(o);renderOrders()}
-function clearToday(){if(!loadOrders().length){toast("今日還沒有訂單");return}if(confirm("確定要清除今日全部訂單嗎？")){saveOrders([]);renderOrders();toast("已清除今日訂單")}}
+function removeOrder(i){
+if(syncMode&&dbRef){const o=syncOrders[i];if(o&&o.id)dbRef.child(o.id).remove()}
+else{const o=loadOrders();o.splice(i,1);saveOrders(o);renderOrders()}
+}
+function clearToday(){
+if(!currentOrders().length){toast("本團還沒有訂單");return}
+if(confirm("確定要清除本團全部訂單嗎？同步模式下所有人都會看到清單被清空。")){
+if(syncMode&&dbRef){dbRef.remove()}else{saveOrders([]);renderOrders()}toast("已清除本團訂單")
+}
+}
 function buildSummary(orders){
 if(!orders.length)return "還沒有訂單。";
 const cups=orders.reduce((a,o)=>a+o.qty,0);
@@ -245,15 +326,15 @@ return s;
 }
 function copySummary(){
 const t=document.getElementById("summaryText").textContent;
-if(!loadOrders().length){toast("還沒有訂單可以複製");return}
+if(!currentOrders().length){toast("還沒有訂單可以複製");return}
 navigator.clipboard.writeText(t).then(()=>toast("彙整文字已複製，可以貼到 LINE 群組了")).catch(()=>{const ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove();toast("彙整文字已複製")});
 }
 function downloadSummary(){
-if(!loadOrders().length){toast("還沒有訂單可以下載");return}
+if(!currentOrders().length){toast("還沒有訂單可以下載");return}
 const blob=new Blob([document.getElementById("summaryText").textContent],{type:"text/plain;charset=utf-8"});
 const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="starbucks-order-"+todayStr()+".txt";a.click();URL.revokeObjectURL(a.href);
 }
-renderTabs();renderMenu();renderChips();checkDailyUpdate(false);
+renderTabs();renderMenu();renderChips();checkDailyUpdate(false);initSync();
 </script>
 </body>
 </html>
