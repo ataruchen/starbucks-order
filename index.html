@@ -88,27 +88,6 @@ footer{color:var(--muted);font-size:13px;text-align:center;padding:0 18px 30px}
 <button class="btn btn-light" type="button" onclick="copyInvite()">🔗 複製邀請連結</button>
 </div>
 <div id="syncStatus" class="status local">正在檢查同步狀態…</div>
-<details>
-<summary>開啟多人同步，需要做的一次性設定（約 5 分鐘）</summary>
-<p>GitHub Pages 本身是靜態網站，沒辦法自己記住多人的訂單，所以多人同步需要一個免費的即時資料庫。本頁已內建 Firebase Realtime Database 的程式碼，只要填入設定就好：</p>
-<ol>
-<li>到 <a href="https://console.firebase.google.com/" target="_blank" rel="noopener">Firebase Console</a> 建立專案（免費 Spark 方案即可），新增一個網頁應用程式。</li>
-<li>在左側選 Realtime Database → 建立資料庫，位置選亞洲區，初期規則可先設為測試模式（之後再依下方規則收緊）。</li>
-<li>把 Firebase 給你的設定值，貼到本檔案最下方 <code>FIREBASE_CONFIG</code> 的位置，重新發佈後，所有人打開頁面就會自動進入同步模式，不需要登入。</li>
-</ol>
-<p>建議的資料庫規則（只允許讀寫 rooms 底下的團購資料）：</p>
-<pre>{
-"rules": {
-"rooms": {
-"$room": {
-".read": true,
-".write": true
-}
-}
-}
-}</pre>
-<p>注意：這個規則是「知道團購代碼就能讀寫」，適合朋友、同事間的臨時團購，不適合放機密資料。代碼請用不容易猜到的字串，例如 <code>2026-10-27-office-8f3k</code>。在設定完成之前，頁面會自動用本機模式運作，功能完全正常，只是訂單只存在自己的裝置上。</p>
-</details>
 </section>
 
 <div class="grid">
