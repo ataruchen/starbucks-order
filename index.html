@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>星巴克團購統計｜每天自動更新菜單</title>
+<meta name="description" content="統計星巴克飲品訂單：選飲品、數量、訂購人姓名與客製化備註，支援每日菜單更新與一鍵複製彙整。">
+<style>
+:root{--green:#00704a;--dark:#1e3932;--bg:#f6f4f1;--card:#fff;--line:#e7e1da;--muted:#6b7280;--radius:18px;--shadow:0 8px 28px rgba(30,57,50,.08)}
+*{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;background:var(--bg);color:#222;line-height:1.6}
+a{color:var(--green)} header{background:var(--dark);color:#fff;padding:28px 20px 22px}
+.wrap{max-width:1120px;margin:0 auto;padding:0 18px}
+.top{display:flex;gap:16px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+.logo{font-size:42px;line-height:1} h1{margin:0;font-size:clamp(26px,4vw,38px);letter-spacing:.02em}
+.sub{color:#cfe3da;margin:8px 0 0;max-width:680px}
+.badge{display:inline-flex;gap:6px;align-items:center;background:#fff;color:var(--dark);border-radius:999px;padding:7px 12px;font-size:13px;font-weight:700;white-space:nowrap}
+.badge i{width:8px;height:8px;border-radius:50%;background:#22a06b;display:inline-block}
+.meta{margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;color:#d7e8e0;font-size:14px}
+.meta button{background:#fff;color:var(--dark);border:0;border-radius:999px;padding:7px 13px;font-weight:700;cursor:pointer}
+main{padding:22px 0 40px}.grid{display:grid;grid-template-columns:1.25fr.85fr;gap:20px;align-items:start}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px}
+.card h2{margin:0 0 6px;font-size:20px;color:var(--dark)}.hint{color:var(--muted);font-size:14px;margin:0 0 14px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.tab{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;cursor:pointer;font-size:14px}
+.tab.active{background:var(--dark);color:#fff;border-color:var(--dark)}
+.search{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:12px;font-size:16px}
+.menu{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:14px}
+.drink{border:1.5px solid var(--line);border-radius:14px;padding:13px;cursor:pointer;background:#fff;text-align:left}
+.drink:hover{border-color:#9ec5b3}.drink.selected{border-color:var(--green);background:#eff8f3;box-shadow:0 0 0 2px rgba(0,112,74,.12)}
+.drink b{display:block;color:var(--dark)}.drink span{color:var(--muted);font-size:12px}.drink.price{color:var(--green);font-weight:800;margin-top:6px}
+.tag{display:inline-block;background:#f0ede8;border-radius:999px;padding:1px 8px;font-size:11px;margin-right:4px}
+.picks{background:#fff8e6;border:1px solid #f0d9a0;border-radius:14px;padding:13px 15px;margin-top:14px}
+.picks b{color:#7a5a00}.field{margin:14px 0} label{display:block;font-weight:700;margin-bottom:7px;color:var(--dark)}
+input[type=text],textarea,select{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;font-size:16px;background:#fff}
+textarea{min-height:78px;resize:vertical}
+.seg{display:flex;gap:8px;flex-wrap:wrap}.seg button{flex:1;min-width:72px;border:1px solid var(--line);background:#fff;border-radius:12px;padding:11px 8px;cursor:pointer}
+.seg button.active{background:var(--green);color:#fff;border-color:var(--green);font-weight:800}
+.qty{display:flex;align-items:center;gap:12px}.qty button{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:#fff;font-size:22px;cursor:pointer}
+.qty strong{font-size:20px;min-width:28px;text-align:center}
+.chips{display:flex;gap:7px;flex-wrap:wrap}.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 11px;cursor:pointer;font-size:13px}
+.chip.active{background:var(--dark);color:#fff;border-color:var(--dark)}
+.btn{width:100%;border:0;border-radius:13px;padding:14px;font-size:17px;font-weight:800;cursor:pointer}
+.btn-green{background:var(--green);color:#fff}.btn-dark{background:var(--dark);color:#fff}.btn-light{background:#fff;border:1px solid var(--line)}
+.btn-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.sticky{position:sticky;top:16px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}.stat{background:#f6f4f1;border-radius:13px;padding:12px;text-align:center}
+.stat b{font-size:24px;color:var(--dark);display:block}.stat span{font-size:12px;color:var(--muted)}
+.order{border-top:1px solid var(--line);padding:13px 0;display:flex;gap:10px;justify-content:space-between}
+.order:first-of-type{border-top:0}.order b{color:var(--dark)}.order small{color:var(--muted);display:block}
+.del{border:0;background:#fff1f1;color:#b42318;border-radius:10px;padding:8px 11px;cursor:pointer;white-space:nowrap;height:fit-content}
+.empty{color:var(--muted);text-align:center;padding:22px 0}
+.summary{white-space:pre-wrap;background:#f6f4f1;border-radius:12px;padding:14px;font-size:14px;max-height:260px;overflow:auto}
+footer{color:var(--muted);font-size:13px;text-align:center;padding:0 18px 30px}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--dark);color:#fff;padding:12px 18px;border-radius:999px;box-shadow:0 10px 30px rgba(0,0,0,.25);z-index:99;display:none;max-width:92vw;text-align:center}
+@media(max-width:900px){.grid{grid-template-columns:1fr}.sticky{position:static}.menu{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){header{padding:22px 14px}.card{padding:16px}.menu{grid-template-columns:1fr}.stats{grid-template-columns:repeat(3,1fr)}.btn-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+<div class="wrap">
+<div class="top">
+<div><h1>☕ 星巴克團購統計</h1><p class="sub">選飲品、填數量與姓名、寫下客製化需求，一頁就能彙整全團的訂單。</p></div>
+<span class="badge"><i></i> 今日菜單已更新</span>
+</div>
+<div class="meta">
+<span>📅 今天：<strong id="todayText">—</strong></span>
+<span>🗂️ 菜單更新日：<strong id="menuDateText">—</strong></span>
+<button type="button" onclick="checkDailyUpdate(true)">↻ 重新檢查今日菜單</button>
+</div>
+</div>
+</header>
+
+<main class="wrap">
+<div class="grid">
+<section class="card">
+<h2>1 · 選一杯飲品</h2>
+<p class="hint">點一下卡片即選取。可用搜尋或分類快速找飲品，價格為參考價，實際以門市公告為準。</p>
+<input class="search" id="search" type="text" placeholder="搜尋飲品，例如：拿堤、抹茶、星冰樂…" oninput="renderMenu()">
+<div class="tabs" id="tabs"></div>
+<div class="picks">⭐ <b>今日推薦：</b><span id="picksText">—</span><br><small style="color:#7a6a3a">每天依日期自動輪換，讓團購每天都有新選擇。</small></div>
+<div class="menu" id="menu"></div>
+<p class="hint" id="menuCount" style="margin-top:12px"></p>
+
+<h2 style="margin-top:26px">2 · 填寫訂購資訊</h2>
+<div class="field"><label for="buyer">訂購人姓名 *</label><input id="buyer" type="text" placeholder="例如：建彰" autocomplete="name"></div>
+<div class="field"><label>已選飲品</label><div id="selectedText" style="font-weight:800;color:var(--green)">尚未選擇飲品，請先點上方卡片</div></div>
+<div class="field"><label>尺寸</label><div class="seg" id="sizeSeg">
+<button type="button" data-v="Tall" onclick="setSize(this)">Tall</button>
+<button type="button" data-v="Grande" class="active" onclick="setSize(this)">Grande</button>
+<button type="button" data-v="Venti" onclick="setSize(this)">Venti</button>
+</div></div>
+<div class="field"><label>冰 / 熱</label><div class="seg" id="tempSeg">
+<button type="button" data-v="冰" class="active" onclick="setTemp(this)">🧊 冰</button>
+<button type="button" data-v="熱" onclick="setTemp(this)">🔥 熱</button>
+<button type="button" data-v="去冰" onclick="setTemp(this)">去冰</button>
+</div></div>
+<div class="field"><label>數量</label><div class="qty"><button type="button" onclick="changeQty(-1)">−</button><strong id="qtyText">1</strong><button type="button" onclick="changeQty(1)">＋</button><span style="color:var(--muted)">杯</span></div></div>
+<div class="field"><label>常用客製化（可多選，點一下加入備註）</label><div class="chips" id="chips"></div></div>
+<div class="field"><label for="note">備註 / 客製化需求</label><textarea id="note" placeholder="例如：少糖、少冰、加一份濃縮、換燕麥奶、不要鮮奶油…"></textarea></div>
+<button class="btn btn-green" type="button" onclick="addOrder()">＋ 加入訂單</button>
+<p class="hint" style="margin-top:10px">訂單只存在這台裝置的瀏覽器裡（依日期分開存放），適合先彙整再由一人統一到門市 / App 下單，本頁不是星巴克官方訂購系統。</p>
+</section>
+
+<aside class="card sticky">
+<h2>今日訂單統計</h2>
+<p class="hint" id="orderDateText">—</p>
+<div class="stats">
+<div class="stat"><b id="totalCups">0</b><span>總杯數</span></div>
+<div class="stat"><b id="totalPeople">0</b><span>訂購人數</span></div>
+<div class="stat"><b id="totalItems">0</b><span>訂單筆數</span></div>
+</div>
+<div id="orderList"><p class="empty">還沒有訂單，先從左邊選一杯吧。</p></div>
+<div class="btn-row">
+<button class="btn btn-dark" type="button" onclick="copySummary()">📋 複製彙整文字</button>
+<button class="btn btn-light" type="button" onclick="downloadSummary()">⬇ 下載彙整.txt</button>
+</div>
+<button class="btn btn-light" style="margin-top:10px" type="button" onclick="clearToday()">🗑 清除今日訂單</button>
+<h2 style="margin-top:22px;font-size:17px">彙整預覽</h2>
+<div class="summary" id="summaryText">還沒有訂單。</div>
+<h2 style="margin-top:22px;font-size:17px">關於「每天自動更新」</h2>
+<p class="hint">星巴克官方沒有公開即時菜單 API，本頁因此採用每日機制：① 每天第一次開啟時，菜單更新日自動變成當天、今日推薦重新輪換、訂單改存到當天的新清單；② 每次開啟都會檢查日期，跨日不會把昨天的訂單混進今天；③ 要更換正式品項時，只要編輯本檔案內的 MENU 清單並重新發佈，訪客重新整理後即生效。</p>
+</aside>
+</div>
+</main>
+<footer>僅供團購統計使用，與 Starbucks 官方無關 · 品項與價格請以門市實際供應為準 · 單一 index.html 檔案，支援手機 / 平板 / 電腦響應式瀏覽</footer>
+<div class="toast" id="toast"></div>
+
+<script>
+const MENU=[
+{name:"美式咖啡",en:"Caffè Americano",cat:"咖啡",temp:"冰/熱",price:{Tall:105,Grande:125,Venti:145}},
+{name:"拿堤",en:"Caffè Latte",cat:"咖啡",temp:"冰/熱",price:{Tall:135,Grande:155,Venti:175}},
+{name:"卡布奇諾",en:"Cappuccino",cat:"咖啡",temp:"熱",price:{Tall:135,Grande:155,Venti:175}},
+{name:"焦糖瑪奇朵",en:"Caramel Macchiato",cat:"咖啡",temp:"冰/熱",price:{Tall:150,Grande:170,Venti:190}},
+{name:"摩卡",en:"Caffè Mocha",cat:"咖啡",temp:"冰/熱",price:{Tall:150,Grande:170,Venti:190}},
+{name:"白巧克力摩卡",en:"White Chocolate Mocha",cat:"咖啡",temp:"冰/熱",price:{Tall:155,Grande:175,Venti:195}},
+{name:"冷萃咖啡",en:"Cold Brew",cat:"咖啡",temp:"冰",price:{Tall:130,Grande:150,Venti:170}},
+{name:"鹹焦糖冷萃",en:"Sea Salt Caramel Cold Brew",cat:"咖啡",temp:"冰",price:{Tall:155,Grande:175,Venti:195}},
+{name:"燕麥奶拿堤",en:"Oatmilk Latte",cat:"咖啡",temp:"冰/熱",price:{Tall:150,Grande:170,Venti:190}},
+{name:"馥列白",en:"Flat White",cat:"咖啡",temp:"熱",price:{Tall:140,Grande:160,Venti:180}},
+{name:"濃縮咖啡",en:"Espresso",cat:"咖啡",temp:"熱",price:{Tall:95,Grande:115,Venti:135}},
+{name:"焦糖星冰樂",en:"Caramel Frappuccino",cat:"星冰樂",temp:"冰沙",price:{Tall:155,Grande:175,Venti:195}},
+{name:"摩卡星冰樂",en:"Mocha Frappuccino",cat:"星冰樂",temp:"冰沙",price:{Tall:155,Grande:175,Venti:195}},
+{name:"抹茶星冰樂",en:"Matcha Frappuccino",cat:"星冰樂",temp:"冰沙",price:{Tall:155,Grande:175,Venti:195}},
+{name:"草莓星冰樂",en:"Strawberry Frappuccino",cat:"星冰樂",temp:"冰沙",price:{Tall:160,Grande:180,Venti:200}},
+{name:"香草星冰樂",en:"Vanilla Frappuccino",cat:"星冰樂",temp:"冰沙",price:{Tall:150,Grande:170,Venti:190}},
+{name:"巧克力碎片星冰樂",en:"Java Chip Frappuccino",cat:"星冰樂",temp:"冰沙",price:{Tall:165,Grande:185,Venti:205}},
+{name:"紅茶拿堤",en:"Black Tea Latte",cat:"茶飲及其他",temp:"冰/熱",price:{Tall:130,Grande:150,Venti:170}},
+{name:"抹茶拿堤",en:"Matcha Latte",cat:"茶飲及其他",temp:"冰/熱",price:{Tall:140,Grande:160,Venti:180}},
+{name:"英式紅茶",en:"English Breakfast Tea",cat:"茶飲及其他",temp:"冰/熱",price:{Tall:105,Grande:125,Venti:145}},
+{name:"伯爵紅茶",en:"Earl Grey Tea",cat:"茶飲及其他",temp:"冰/熱",price:{Tall:105,Grande:125,Venti:145}},
+{name:"柚香綠茶",en:"Citrus Green Tea",cat:"茶飲及其他",temp:"冰/熱",price:{Tall:115,Grande:135,Venti:155}},
+{name:"經典巧克力",en:"Signature Hot Chocolate",cat:"茶飲及其他",temp:"熱",price:{Tall:135,Grande:155,Venti:175}},
+{name:"草莓牛奶",en:"Strawberry Milk",cat:"茶飲及其他",temp:"冰/熱",price:{Tall:130,Grande:150,Venti:170}},
+{name:"蒸餾鮮奶",en:"Steamed Milk",cat:"茶飲及其他",temp:"熱",price:{Tall:110,Grande:130,Venti:150}},
+];
+const CATS=["全部","咖啡","星冰樂","茶飲及其他"];
+const CHIP_LIST=["少糖","半糖","無糖","少冰","去冰","正常冰","加一份濃縮","換燕麥奶","換豆奶","去咖啡因","不要鮮奶油","多加鮮奶油"];
+let activeCat="全部", selected=null, size="Grande", temp="冰", qty=1;
+function todayStr(d){d=d||new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function fmtDate(s){const p=s.split("-");return p[0]+"年"+p[1]+"月"+p[2]+"日";}
+function orderKey(){return "sb_orders_"+todayStr();}
+function loadOrders(){try{return JSON.parse(localStorage.getItem(orderKey())||"[]")}catch(e){return []}}
+function saveOrders(o){localStorage.setItem(orderKey(),JSON.stringify(o))}
+function toast(m){const t=document.getElementById("toast");t.textContent=m;t.style.display="block";setTimeout(()=>t.style.display="none",3200)}
+function seededPicks(){
+const s=todayStr();let h=0;for(let i=0;i<s.length;i++){h=(h*31+s.charCodeAt(i))>>>0}
+const arr=[...MENU];for(let i=arr.length-1;i>0;i--){h=(h*1103515245+12345)&0x7fffffff;const j=h%(i+1);[arr[i],arr[j]]=[arr[j],arr[i]]}
+return arr.slice(0,3).map(x=>x.name);
+}
+function checkDailyUpdate(manual){
+const today=todayStr(), last=localStorage.getItem("sb_menu_date");
+document.getElementById("todayText").textContent=fmtDate(today);
+document.getElementById("menuDateText").textContent=fmtDate(today);
+document.getElementById("orderDateText").textContent="統計日期："+fmtDate(today)+"（每天自動換成當天清單）";
+document.getElementById("picksText").textContent=seededPicks().join("、");
+if(last!==today){localStorage.setItem("sb_menu_date",today);if(last){toast("已跨日，菜單已更新為 "+fmtDate(today)+"，今日推薦也已輪換")}}
+else if(manual){toast("已檢查：今日菜單為 "+fmtDate(today))}
+renderOrders();
+}
+function renderTabs(){
+document.getElementById("tabs").innerHTML=CATS.map(c=>`<button type="button" class="tab ${c===activeCat?"active":""}" onclick="setCat('${c}')">${c}</button>`).join("");
+}
+function setCat(c){activeCat=c;renderTabs();renderMenu()}
+function renderMenu(){
+const q=(document.getElementById("search").value||"").trim();
+const list=MENU.filter(m=>(activeCat==="全部"||m.cat===activeCat)&&(!q||m.name.includes(q)||m.en.toLowerCase().includes(q.toLowerCase())));
+document.getElementById("menu").innerHTML=list.length?list.map(m=>{
+const sel=selected&&selected.name===m.name;
+return `<button type="button" class="drink ${sel?"selected":""}" onclick="selectDrink('${m.name}')"><span class="tag">${m.cat}</span><span class="tag">${m.temp}</span><b>${m.name}</b><span>${m.en}</span><div class="price">Grande 參考價 NT$ ${m.price.Grande}</div></button>`
+}).join(""):`<p style="grid-column:1/-1;color:var(--muted)">找不到「${q}」，試試其他關鍵字，或點分類瀏覽。</p>`;
+document.getElementById("menuCount").textContent=`共 ${list.length} 款（全部 ${MENU.length} 款）`;
+}
+function selectDrink(name){
+selected=MENU.find(m=>m.name===name);
+document.getElementById("selectedText").textContent=selected?selected.name+"（"+selected.en+"）":"尚未選擇飲品";
+renderMenu();
+document.getElementById("buyer").focus();
+}
+function setSize(btn){size=btn.dataset.v;document.querySelectorAll("#sizeSeg button").forEach(b=>b.classList.toggle("active",b===btn))}
+function setTemp(btn){temp=btn.dataset.v;document.querySelectorAll("#tempSeg button").forEach(b=>b.classList.toggle("active",b===btn))}
+function changeQty(d){qty=Math.max(1,Math.min(20,qty+d));document.getElementById("qtyText").textContent=qty}
+function renderChips(){
+document.getElementById("chips").innerHTML=CHIP_LIST.map(c=>`<button type="button" class="chip" onclick="toggleChip(this)">${c}</button>`).join("");
+}
+function toggleChip(btn){
+btn.classList.toggle("active");
+const note=document.getElementById("note");const v=btn.textContent.trim();
+const parts=note.value.split("、").map(s=>s.trim()).filter(Boolean);
+if(btn.classList.contains("active")){if(!parts.includes(v))parts.push(v)}
+else{const i=parts.indexOf(v);if(i>=0)parts.splice(i,1)}
+note.value=parts.join("、");
+}
+function addOrder(){
+const buyer=document.getElementById("buyer").value.trim();
+if(!buyer){toast("請先填寫訂購人姓名");document.getElementById("buyer").focus();return}
+if(!selected){toast("請先點選一杯飲品");return}
+const orders=loadOrders();
+orders.push({buyer,drink:selected.name,size,temp,qty,note:document.getElementById("note").value.trim(),time:new Date().toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit"})});
+saveOrders(orders);renderOrders();
+document.getElementById("note").value="";document.querySelectorAll(".chip").forEach(c=>c.classList.remove("active"));
+qty=1;document.getElementById("qtyText").textContent=qty;
+toast(`已加入：${buyer} 的 ${selected.name} x${orders[orders.length-1].qty}`);
+}
+function renderOrders(){
+const orders=loadOrders();
+const cups=orders.reduce((a,o)=>a+o.qty,0);
+document.getElementById("totalCups").textContent=cups;
+document.getElementById("totalPeople").textContent=new Set(orders.map(o=>o.buyer)).size;
+document.getElementById("totalItems").textContent=orders.length;
+document.getElementById("orderList").innerHTML=orders.length?orders.map((o,i)=>`<div class="order"><div><b>${o.buyer} · ${o.drink}</b><small>${o.size} · ${o.temp} · ${o.qty} 杯${o.note?" · 備註："+o.note:""} · ${o.time}</small></div><button class="del" type="button" onclick="removeOrder(${i})">刪除</button></div>`).join(""):`<p class="empty">還沒有訂單，先從左邊選一杯吧。</p>`;
+document.getElementById("summaryText").textContent=buildSummary(orders);
+}
+function removeOrder(i){const o=loadOrders();o.splice(i,1);saveOrders(o);renderOrders()}
+function clearToday(){if(!loadOrders().length){toast("今日還沒有訂單");return}if(confirm("確定要清除今日全部訂單嗎？")){saveOrders([]);renderOrders();toast("已清除今日訂單")}}
+function buildSummary(orders){
+if(!orders.length)return "還沒有訂單。";
+const cups=orders.reduce((a,o)=>a+o.qty,0);
+const by={};orders.forEach(o=>{const k=o.drink+" "+o.size+" "+o.temp;by[k]=(by[k]||0)+o.qty});
+let s=`\n共 ${cups} 杯 / ${new Set(orders.map(o=>o.buyer)).size} 人 / ${orders.length} 筆\n\n\n`;
+orders.forEach(o=>{s+=`- ${o.buyer}：${o.drink} ${o.size} ${o.temp} x${o.qty}${o.note?"（"+o.note+"）":""}\n`});
+s+=`\n\n`;Object.entries(by).forEach(([k,v])=>{s+=`- ${k}：${v} 杯\n`});
+s+=`\n※ 僅供團購彙整，實際品項與價格以門市為準。`;
+return s;
+}
+function copySummary(){
+const t=document.getElementById("summaryText").textContent;
+if(!loadOrders().length){toast("還沒有訂單可以複製");return}
+navigator.clipboard.writeText(t).then(()=>toast("彙整文字已複製，可以貼到 LINE 群組了")).catch(()=>{const ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove();toast("彙整文字已複製")});
+}
+function downloadSummary(){
+if(!loadOrders().length){toast("還沒有訂單可以下載");return}
+const blob=new Blob([document.getElementById("summaryText").textContent],{type:"text/plain;charset=utf-8"});
+const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="starbucks-order-"+todayStr()+".txt";a.click();URL.revokeObjectURL(a.href);
+}
+renderTabs();renderMenu();renderChips();checkDailyUpdate(false);
+</script>
+</body>
+</html>
