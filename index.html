@@ -114,7 +114,7 @@ footer{color:var(--muted);font-size:13px;text-align:center;padding:0 18px 30px}
 <div class="grid">
 <section class="card">
 <h2>1 · 選一杯飲品</h2>
-<p class="hint">點一下卡片即選取。可用搜尋或分類快速找飲品，價格為參考價，實際以門市公告為準。</p>
+<p class="hint">點一下卡片即選取。可用搜尋或分類快速找飲品。菜單依據星巴克台灣官方飲品頁整理，冰／熱同款已合併為一項；官方頁面未標示價格，實際價格與供應請以門市為準。未列入 DREAM PLAZA 限定、含酒精飲品、罐裝飲料與隨行外帶盒。</p>
 <input class="search" id="search" type="text" placeholder="搜尋飲品，例如：拿堤、抹茶、星冰樂…" oninput="renderMenu()">
 <div class="tabs" id="tabs"></div>
 <div class="picks">⭐ <b>今日推薦：</b><span id="picksText">—</span><br><small style="color:#7a6a3a">每天依日期自動輪換，讓團購每天都有新選擇。</small></div>
@@ -124,10 +124,10 @@ footer{color:var(--muted);font-size:13px;text-align:center;padding:0 18px 30px}
 <h2 style="margin-top:26px">2 · 填寫訂購資訊</h2>
 <div class="field"><label for="buyer">訂購人姓名 *</label><input id="buyer" type="text" placeholder="例如：建彰" autocomplete="name"></div>
 <div class="field"><label>已選飲品</label><div id="selectedText" style="font-weight:800;color:var(--green)">尚未選擇飲品，請先點上方卡片</div></div>
-<div class="field"><label>尺寸</label><div class="seg" id="sizeSeg">
-<button type="button" data-v="Tall" onclick="setSize(this)">Tall</button>
-<button type="button" data-v="Grande" class="active" onclick="setSize(this)">Grande</button>
-<button type="button" data-v="Venti" onclick="setSize(this)">Venti</button>
+<div class="field"><label>尺寸（中杯 / 大杯 / 特大杯）</label><div class="seg" id="sizeSeg">
+<button type="button" data-v="Tall" onclick="setSize(this)">中杯 Tall</button>
+<button type="button" data-v="Grande" class="active" onclick="setSize(this)">大杯 Grande</button>
+<button type="button" data-v="Venti" onclick="setSize(this)">特大杯 Venti</button>
 </div></div>
 <div class="field"><label>冰 / 熱</label><div class="seg" id="tempSeg">
 <button type="button" data-v="冰" class="active" onclick="setTemp(this)">🧊 冰</button>
@@ -162,7 +162,7 @@ footer{color:var(--muted);font-size:13px;text-align:center;padding:0 18px 30px}
 </aside>
 </div>
 </main>
-<footer>僅供團購統計使用，與 Starbucks 官方無關 · 品項與價格請以門市實際供應為準 · 單一 index.html 檔案，支援手機 / 平板 / 電腦響應式瀏覽</footer>
+<footer>菜單品項參考星巴克台灣官方飲品頁（2026-10-26 查閱），僅供團購統計使用，與 Starbucks 官方無關 · 品項與價格請以門市實際供應為準 · 單一 index.html 檔案，支援手機 / 平板 / 電腦響應式瀏覽</footer>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -187,37 +187,26 @@ const FIREBASE_CONFIG = {
   appId: "1:247115618063:web:bbbd871f7763df2983907a"
 };
 
-const MENU=[
-{name:"美式咖啡",en:"Caffè Americano",cat:"咖啡",temp:"冰/熱",price:{Tall:105,Grande:125,Venti:145}},
-{name:"拿堤",en:"Caffè Latte",cat:"咖啡",temp:"冰/熱",price:{Tall:135,Grande:155,Venti:175}},
-{name:"卡布奇諾",en:"Cappuccino",cat:"咖啡",temp:"熱",price:{Tall:135,Grande:155,Venti:175}},
-{name:"焦糖瑪奇朵",en:"Caramel Macchiato",cat:"咖啡",temp:"冰/熱",price:{Tall:150,Grande:170,Venti:190}},
-{name:"摩卡",en:"Caffè Mocha",cat:"咖啡",temp:"冰/熱",price:{Tall:150,Grande:170,Venti:190}},
-{name:"白巧克力摩卡",en:"White Chocolate Mocha",cat:"咖啡",temp:"冰/熱",price:{Tall:155,Grande:175,Venti:195}},
-{name:"冷萃咖啡",en:"Cold Brew",cat:"咖啡",temp:"冰",price:{Tall:130,Grande:150,Venti:170}},
-{name:"鹹焦糖冷萃",en:"Sea Salt Caramel Cold Brew",cat:"咖啡",temp:"冰",price:{Tall:155,Grande:175,Venti:195}},
-{name:"燕麥奶拿堤",en:"Oatmilk Latte",cat:"咖啡",temp:"冰/熱",price:{Tall:150,Grande:170,Venti:190}},
-{name:"馥列白",en:"Flat White",cat:"咖啡",temp:"熱",price:{Tall:140,Grande:160,Venti:180}},
-{name:"濃縮咖啡",en:"Espresso",cat:"咖啡",temp:"熱",price:{Tall:95,Grande:115,Venti:135}},
-{name:"焦糖星冰樂",en:"Caramel Frappuccino",cat:"星冰樂",temp:"冰沙",price:{Tall:155,Grande:175,Venti:195}},
-{name:"摩卡星冰樂",en:"Mocha Frappuccino",cat:"星冰樂",temp:"冰沙",price:{Tall:155,Grande:175,Venti:195}},
-{name:"抹茶星冰樂",en:"Matcha Frappuccino",cat:"星冰樂",temp:"冰沙",price:{Tall:155,Grande:175,Venti:195}},
-{name:"草莓星冰樂",en:"Strawberry Frappuccino",cat:"星冰樂",temp:"冰沙",price:{Tall:160,Grande:180,Venti:200}},
-{name:"香草星冰樂",en:"Vanilla Frappuccino",cat:"星冰樂",temp:"冰沙",price:{Tall:150,Grande:170,Venti:190}},
-{name:"巧克力碎片星冰樂",en:"Java Chip Frappuccino",cat:"星冰樂",temp:"冰沙",price:{Tall:165,Grande:185,Venti:205}},
-{name:"紅茶拿堤",en:"Black Tea Latte",cat:"茶飲及其他",temp:"冰/熱",price:{Tall:130,Grande:150,Venti:170}},
-{name:"抹茶拿堤",en:"Matcha Latte",cat:"茶飲及其他",temp:"冰/熱",price:{Tall:140,Grande:160,Venti:180}},
-{name:"英式紅茶",en:"English Breakfast Tea",cat:"茶飲及其他",temp:"冰/熱",price:{Tall:105,Grande:125,Venti:145}},
-{name:"伯爵紅茶",en:"Earl Grey Tea",cat:"茶飲及其他",temp:"冰/熱",price:{Tall:105,Grande:125,Venti:145}},
-{name:"柚香綠茶",en:"Citrus Green Tea",cat:"茶飲及其他",temp:"冰/熱",price:{Tall:115,Grande:135,Venti:155}},
-{name:"經典巧克力",en:"Signature Hot Chocolate",cat:"茶飲及其他",temp:"熱",price:{Tall:135,Grande:155,Venti:175}},
-{name:"草莓牛奶",en:"Strawberry Milk",cat:"茶飲及其他",temp:"冰/熱",price:{Tall:130,Grande:150,Venti:170}},
-{name:"蒸餾鮮奶",en:"Steamed Milk",cat:"茶飲及其他",temp:"熱",price:{Tall:110,Grande:130,Venti:150}},
-];
-const CATS=["全部","咖啡","星冰樂","茶飲及其他"];
+const MENU=[{"name": "米香桂花那堤", "en": "Osmanthus Rice Flavored Latte", "cat": "咖啡飲品", "temp": "冰/熱"}, {"name": "烤夏威夷果燕麥那堤", "en": "Roasted Macadamia Oatmilk Latte", "cat": "咖啡飲品", "temp": "冰/熱"}, {"name": "冰搖烤夏威夷果燕麥咖啡", "en": "Roasted Macadamia Oatmilk Iced Shaken Espresso", "cat": "咖啡飲品", "temp": "冰"}, {"name": "特選燕麥奶那堤", "en": "Espresso Choice Oatmilk Latte", "cat": "咖啡飲品", "temp": "冰/熱"}, {"name": "奶香榛果風味摩卡", "en": "Creamy Hazelnut Mocha", "cat": "咖啡飲品", "temp": "冰/熱"}, {"name": "黑糖風味奶香咖啡", "en": "Brown Sugar Creamy Coffee", "cat": "咖啡飲品", "temp": "冰/熱"}, {"name": "鹹焦糖奶油爆米花風味那堤", "en": "Salted Caramel Popcorn Creamy Latte", "cat": "咖啡飲品", "temp": "冰/熱"}, {"name": "椰香綿雲那堤", "en": "Coconut Creamy Latte", "cat": "咖啡飲品", "temp": "冰/熱"}, {"name": "那堤", "en": "Caffè Latte", "cat": "咖啡飲品", "temp": "冰/熱"}, {"name": "焦糖瑪奇朵", "en": "Caramel Macchiato", "cat": "咖啡飲品", "temp": "冰/熱"}, {"name": "馥列白", "en": "Flat White", "cat": "咖啡飲品", "temp": "冰/熱"}, {"name": "可可瑪奇朵", "en": "Cocoa Macchiato", "cat": "咖啡飲品", "temp": "冰/熱"}, {"name": "美式咖啡", "en": "Caffè Americano", "cat": "咖啡飲品", "temp": "冰/熱"}, {"name": "摩卡", "en": "Caffè Mocha", "cat": "咖啡飲品", "temp": "冰/熱"}, {"name": "濃縮咖啡", "en": "Espresso", "cat": "咖啡飲品", "temp": "熱"}, {"name": "卡布奇諾", "en": "Cappuccino", "cat": "咖啡飲品", "temp": "熱"}, {"name": "特選馥郁那堤", "en": "Espresso Choice Extra Shot Latte", "cat": "咖啡飲品", "temp": "冰/熱"}, {"name": "焦糖奶香星享那堤", "en": "Creamy Caramel Latte", "cat": "咖啡飲品", "temp": "冰/熱"}, {"name": "雲朵泡泡美式咖啡", "en": "Starbucks Aerocano", "cat": "咖啡飲品", "temp": "冰"}, {"name": "特選蜜柚雲朵泡泡美式咖啡", "en": "Honey Ruby Grapefruit Aerocano", "cat": "咖啡飲品", "temp": "冰"}, {"name": "雲朵冰搖濃縮咖啡", "en": "Cold Foam Iced Espresso", "cat": "咖啡飲品", "temp": "冰"}, {"name": "榛果風味那堤", "en": "Hazelnut Flavored Latte", "cat": "咖啡飲品", "temp": "冰"}, {"name": "每日精選咖啡", "en": "Brewed Coffee", "cat": "咖啡飲品", "temp": "熱"}, {"name": "咖啡密斯朵", "en": "Caffè Misto", "cat": "咖啡飲品", "temp": "熱"}, {"name": "米香桂花紅茶那堤", "en": "Osmanthus Rice Flavored Black Tea Latte", "cat": "茶瓦納", "temp": "冰/熱"}, {"name": "焦糖奶香紅茶那堤", "en": "Creamy Caramel Black Tea Latte", "cat": "茶瓦納", "temp": "冰/熱"}, {"name": "伯爵茶那堤", "en": "Earl Grey Tea Latte", "cat": "茶瓦納", "temp": "冰/熱"}, {"name": "福吉茶那堤", "en": "Hojicha Tea Latte", "cat": "茶瓦納", "temp": "冰/熱"}, {"name": "經典紅茶那堤", "en": "Black Tea Latte", "cat": "茶瓦納", "temp": "冰/熱"}, {"name": "醇濃抹茶那堤", "en": "Pure Matcha Latte", "cat": "茶瓦納", "temp": "冰/熱"}, {"name": "玫瑰蜜香茶那堤", "en": "Rose Fancy Tea Latte", "cat": "茶瓦納", "temp": "冰/熱"}, {"name": "洋甘菊花草茶", "en": "Chamomile Herbal Blend", "cat": "茶瓦納", "temp": "熱"}, {"name": "英式紅茶", "en": "English Breakfast Black Tea", "cat": "茶瓦納", "temp": "熱"}, {"name": "蜜柚紅茶", "en": "Black Tea with Ruby Grapefruit and Honey", "cat": "茶瓦納", "temp": "冰/熱"}, {"name": "阿里山烏龍茶", "en": "Alishan Oolong Tea", "cat": "茶瓦納", "temp": "冰/熱"}, {"name": "蜜柚檸檬果茶", "en": "Iced Shaken Ruby Grapefruit Lemon Passion Tea", "cat": "茶瓦納", "temp": "冰"}, {"name": "冰搖紅茶", "en": "Iced Shaken Black Tea", "cat": "茶瓦納", "temp": "冰"}, {"name": "冰搖檸檬果茶", "en": "Iced Shaken Lemon Passion Tea", "cat": "茶瓦納", "temp": "冰"}, {"name": "阿里山蜜柚烏龍青茶", "en": "Ruby Grapefruit Alishan Oolong Tea", "cat": "茶瓦納", "temp": "冰"}, {"name": "冰搖檸檬紅茶", "en": "Iced Shaken Lemon Black Tea", "cat": "茶瓦納", "temp": "冰"}, {"name": "咖啡星冰樂", "en": "Coffee Frappuccino Blended Beverage", "cat": "星冰樂", "temp": "冰沙"}, {"name": "焦糖星冰樂", "en": "Caramel Frappuccino Blended Beverage", "cat": "星冰樂", "temp": "冰沙"}, {"name": "摩卡可可碎片星冰樂", "en": "Java Chip Frappuccino Blended Beverage", "cat": "星冰樂", "temp": "冰沙"}, {"name": "焦糖可可碎片星冰樂", "en": "Caramel Java Chip Frappuccino Blended Beverage", "cat": "星冰樂", "temp": "冰沙"}, {"name": "躲貓貓藍莓星冰樂", "en": "Blueberry & Java Chips Frappuccino Blended Beverage", "cat": "星冰樂", "temp": "冰沙"}, {"name": "烤夏威夷果燕麥星冰樂", "en": "Roasted Macadamia Oatmilk Frappuccino Blended Beverage", "cat": "星冰樂", "temp": "冰沙"}, {"name": "巧克力可可碎片星冰樂", "en": "Chocolate Cream Java Chip Frappuccino Blended Beverage", "cat": "星冰樂", "temp": "冰沙"}, {"name": "醇濃抹茶星冰樂", "en": "Pure Matcha Cream Frappuccino Blended Beverage", "cat": "星冰樂", "temp": "冰沙"}, {"name": "香草風味星冰樂", "en": "Vanilla Cream Frappuccino Blended Beverage", "cat": "星冰樂", "temp": "冰沙"}, {"name": "雙果果汁星冰樂", "en": "Mango Passion Fruit Blended Juice Drink", "cat": "星冰樂", "temp": "冰沙"}, {"name": "冰香草風味蛋白雲朵那堤", "en": "Iced Vanilla Cream Protein Latte", "cat": "蛋白飲品", "temp": "冰"}, {"name": "冰可可蛋白雲朵那堤", "en": "Iced Chocolate Cream Protein Latte", "cat": "蛋白飲品", "temp": "冰"}, {"name": "紅心芭樂冷萃咖啡", "en": "Guava Lemonade Cold Brew", "cat": "冷萃咖啡", "temp": "冰"}, {"name": "冷萃咖啡", "en": "Cold Brew", "cat": "冷萃咖啡", "temp": "冰"}, {"name": "經典特調冷萃咖啡", "en": "Vanilla Sweet Cream Cold Brew", "cat": "冷萃咖啡", "temp": "冰"}, {"name": "香檸蜜柚冷萃咖啡", "en": "Ruby Grapefruit and Honey Lemonade Cold Brew", "cat": "冷萃咖啡", "temp": "冰"}, {"name": "夏日冰柚冷萃咖啡", "en": "Honey Ruby Grapefruit Cold Brew", "cat": "冷萃咖啡", "temp": "冰"}, {"name": "檸檬冷萃咖啡", "en": "Lemonade Cold Brew", "cat": "冷萃咖啡", "temp": "冰"}, {"name": "鹹焦糖風味氮氣歐蕾", "en": "Salted Caramel Flavored Nitro Cold Brew with Milk", "cat": "冷萃咖啡", "temp": "冰"}, {"name": "經典特調氮氣冷萃咖啡", "en": "Nitro Cold Brew with Vanilla Sweet Cream", "cat": "冷萃咖啡", "temp": "冰"}, {"name": "氮氣冷萃咖啡", "en": "Nitro Cold Brew", "cat": "冷萃咖啡", "temp": "冰"}, {"name": "氮氣冷萃咖啡歐蕾", "en": "Nitro Cold Brew Coffee with Milk", "cat": "冷萃咖啡", "temp": "冰"}, {"name": "草莓巴西莓風味冰雪星沁爽", "en": "Frozen Strawberry Acai Lemonade Starbucks Refreshers Beverage", "cat": "星沁爽", "temp": "冰"}, {"name": "草莓巴西莓檸檬風味星沁爽", "en": "Strawberry Acai with Lemonade Starbucks Refreshers", "cat": "星沁爽", "temp": "冰"}, {"name": "草莓巴西莓椰奶風味星沁爽", "en": "Pink Drink with Strawberry Acai Starbucks Refreshers", "cat": "星沁爽", "temp": "冰"}, {"name": "經典巧克力", "en": "Signature Hot Chocolate", "cat": "其他飲料", "temp": "冰/熱"}, {"name": "冰經典紅茶馥洛特", "en": "Iced Black Tea Float", "cat": "冰淇淋飲品", "temp": "冰"}, {"name": "冰經典美式馥洛特", "en": "Iced Americano Float", "cat": "冰淇淋飲品", "temp": "冰"}, {"name": "麥芽雪冷萃", "en": "Cold Brew Malt", "cat": "冰淇淋飲品", "temp": "冰"}, {"name": "經典阿法奇朵", "en": "Classic Affogato", "cat": "冰淇淋飲品", "temp": "冰"}];
+const CATS=["全部", "咖啡飲品", "茶瓦納", "星冰樂", "蛋白飲品", "冷萃咖啡", "星沁爽", "其他飲料", "冰淇淋飲品"];
 const CHIP_LIST=["少糖","半糖","無糖","少冰","去冰","正常冰","加一份濃縮","換燕麥奶","換豆奶","去咖啡因","不要鮮奶油","多加鮮奶油"];
 let activeCat="全部", selected=null, size="Grande", temp="冰", qty=1;
 let syncMode=false, dbRef=null, syncOrders=[];
+function sizeLabel(s){return {Tall:"中杯",Grande:"大杯",Venti:"特大杯"}[s]||s}
+function updateTempOptions(){
+  if(!selected) return;
+  const allowed = selected.temp==="熱" ? ["熱"] : selected.temp==="冰/熱" ? ["冰","熱","去冰"] : ["冰","去冰"];
+  document.querySelectorAll("#tempSeg button").forEach(b=>{
+    const ok = allowed.includes(b.dataset.v);
+    b.disabled = !ok; b.style.opacity = ok ? 1 : 0.35;
+    if(!ok && b.classList.contains("active")) b.classList.remove("active");
+  });
+  if(!allowed.includes(temp)){
+    temp = allowed[0];
+    document.querySelectorAll("#tempSeg button").forEach(b=>b.classList.toggle("active", b.dataset.v===temp));
+  }
+}
+
 function todayStr(d){d=d||new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
 function fmtDate(s){const p=s.split("-");return p[0]+"年"+p[1]+"月"+p[2]+"日";}
 function cleanRoom(v){return (v||"").trim().replace(/[^A-Za-z0-9\-_]/g,"").slice(0,60)||todayStr();}
@@ -276,11 +265,11 @@ const q=(document.getElementById("search").value||"").trim();
 const list=MENU.filter(m=>(activeCat==="全部"||m.cat===activeCat)&&(!q||m.name.includes(q)||m.en.toLowerCase().includes(q.toLowerCase())));
 document.getElementById("menu").innerHTML=list.length?list.map(m=>{
 const sel=selected&&selected.name===m.name;
-return `<button type="button" class="drink ${sel?"selected":""}" onclick="selectDrink('${m.name}')"><span class="tag">${m.cat}</span><span class="tag">${m.temp}</span><b>${m.name}</b><span>${m.en}</span><div class="price">Grande 參考價 NT$ ${m.price.Grande}</div></button>`
+return `<button type="button" class="drink ${sel?"selected":""}" onclick="selectDrink('${m.name}')"><span class="tag">${m.cat}</span><span class="tag">${m.temp}</span><b>${m.name}</b><span>${m.en}</span><div class="price">價格請洽門市</div></button>`
 }).join(""):`<p style="grid-column:1/-1;color:var(--muted)">找不到「${q}」，試試其他關鍵字，或點分類瀏覽。</p>`;
 document.getElementById("menuCount").textContent=`共 ${list.length} 款（全部 ${MENU.length} 款）`;
 }
-function selectDrink(name){selected=MENU.find(m=>m.name===name);document.getElementById("selectedText").textContent=selected?selected.name+"（"+selected.en+"）":"尚未選擇飲品";renderMenu();document.getElementById("buyer").focus()}
+function selectDrink(name){selected=MENU.find(m=>m.name===name);document.getElementById("selectedText").textContent=selected?selected.name+"（"+selected.en+"）":"尚未選擇飲品";renderMenu();updateTempOptions();document.getElementById("buyer").focus()}
 function setSize(btn){size=btn.dataset.v;document.querySelectorAll("#sizeSeg button").forEach(b=>b.classList.toggle("active",b===btn))}
 function setTemp(btn){temp=btn.dataset.v;document.querySelectorAll("#tempSeg button").forEach(b=>b.classList.toggle("active",b===btn))}
 function changeQty(d){qty=Math.max(1,Math.min(20,qty+d));document.getElementById("qtyText").textContent=qty}
@@ -309,7 +298,7 @@ const cups=orders.reduce((a,o)=>a+o.qty,0);
 document.getElementById("totalCups").textContent=cups;
 document.getElementById("totalPeople").textContent=new Set(orders.map(o=>o.buyer)).size;
 document.getElementById("totalItems").textContent=orders.length;
-document.getElementById("orderList").innerHTML=orders.length?orders.map((o,i)=>`<div class="order"><div><b>${o.buyer} · ${o.drink}</b><small>${o.size} · ${o.temp} · ${o.qty} 杯${o.note?" · 備註："+o.note:""} · ${o.time||""}</small></div><button class="del" type="button" onclick="removeOrder(${i})">刪除</button></div>`).join(""):`<p class="empty">還沒有訂單，先從左邊選一杯吧。</p>`;
+document.getElementById("orderList").innerHTML=orders.length?orders.map((o,i)=>`<div class="order"><div><b>${o.buyer} · ${o.drink}</b><small>${sizeLabel(o.size)} (${o.size}) · ${o.temp} · ${o.qty} 杯${o.note?" · 備註："+o.note:""} · ${o.time||""}</small></div><button class="del" type="button" onclick="removeOrder(${i})">刪除</button></div>`).join(""):`<p class="empty">還沒有訂單，先從左邊選一杯吧。</p>`;
 document.getElementById("summaryText").textContent=buildSummary(orders);
 }
 function removeOrder(i){
@@ -325,9 +314,9 @@ if(syncMode&&dbRef){dbRef.remove()}else{saveOrders([]);renderOrders()}toast("已
 function buildSummary(orders){
 if(!orders.length)return "還沒有訂單。";
 const cups=orders.reduce((a,o)=>a+o.qty,0);
-const by={};orders.forEach(o=>{const k=o.drink+" "+o.size+" "+o.temp;by[k]=(by[k]||0)+o.qty});
+const by={};orders.forEach(o=>{const k=o.drink+" "+sizeLabel(o.size)+" "+o.temp;by[k]=(by[k]||0)+o.qty});
 let s=`\n共 ${cups} 杯 / ${new Set(orders.map(o=>o.buyer)).size} 人 / ${orders.length} 筆\n\n\n`;
-orders.forEach(o=>{s+=`- ${o.buyer}：${o.drink} ${o.size} ${o.temp} x${o.qty}${o.note?"（"+o.note+"）":""}\n`});
+orders.forEach(o=>{s+=`- ${o.buyer}：${o.drink} ${sizeLabel(o.size)} ${o.temp} x${o.qty}${o.note?"（"+o.note+"）":""}\n`});
 s+=`\n\n`;Object.entries(by).forEach(([k,v])=>{s+=`- ${k}：${v} 杯\n`});
 s+=`\n※ 僅供團購彙整，實際品項與價格以門市為準。`;
 return s;
